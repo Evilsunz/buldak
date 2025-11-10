@@ -1,9 +1,10 @@
 use chrono::{NaiveDate, Utc, NaiveDateTime, Duration};
 use rand;
 use rand::Rng;
-use rusqlite::{Connection, Result, ToSql};
+use rusqlite::{Connection, Result};
 
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct Record {
     pub id: i32,
     pub store: f32,
@@ -13,7 +14,55 @@ pub struct Record {
     pub date: NaiveDate,
 }
 
-pub fn get_records() -> Result<(Vec<Record>)> {
+impl Record {
+    pub fn vec_of_fields(&self) -> Vec<String> {
+        vec!(
+             self.date.format("%Y-%m-%d").to_string(),
+             self.store.to_string(),
+             self.beer.to_string(),
+             self.allos.to_string(),
+             self.comments.to_string(),
+        )
+    }
+}
+
+#[derive(Debug)]
+#[derive(Clone)]
+pub struct Records{
+    pub records: Vec<Record>,
+    pub store_total : f32,
+    pub beer_total : f32,
+    pub allos_total : f32,
+    pub all_total : f32,
+}
+
+impl Records {
+
+    pub fn new(recs: &Vec<Record>) -> Records {
+        let (store_total, beer_total, allos_total, all_total) = Self::calculate_totals(recs);
+        Records {
+            records: recs.clone(),
+            store_total,
+            beer_total,
+            allos_total,
+            all_total,
+        }
+    }
+
+    fn calculate_totals(recs: &[Record]) -> (f32, f32, f32, f32) {
+        let (store_sum, beer_sum, allos_sum) = recs.iter().fold(
+            (0.0, 0.0, 0.0),
+            |(store, beer, allos), r| {
+                (store + r.store, beer + r.beer, allos + r.allos)
+            },
+        );
+        let total_sum = store_sum + beer_sum + allos_sum;
+        (store_sum, beer_sum, allos_sum, total_sum)
+    }
+
+}
+
+pub fn get_records() -> Result<(Records)> {
     let conn = Connection::open("./buldak.sqlite3")?;
 
     let mut stmt = conn.prepare("SELECT id, store, beer, allos, comment, date FROM person")?;
@@ -27,11 +76,11 @@ pub fn get_records() -> Result<(Vec<Record>)> {
             date: row.get(5)?,
         })
     })?;
-    let result = person_iter.map(|r| r.unwrap()).collect::<Vec<Record>>();
-    for person in result.iter().clone() {
-        println!("Found record {:?}", person);
-    }
-    Ok((result))
+    let records = person_iter.map(|r| r.unwrap()).collect::<Vec<Record>>();
+    // for person in result.iter().clone() {
+    //     println!("Found record {:?}", person);
+    // }
+    Ok((Records::new(&records)))
 }
 
 
