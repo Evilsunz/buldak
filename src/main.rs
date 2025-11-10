@@ -10,7 +10,7 @@ use ratatui::{
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::prelude::Span;
-use ratatui::widgets::{Cell, Row, Table, TableState};
+use ratatui::widgets::{Bar, BarChart, BarGroup, Cell, Row, Table, TableState};
 use crate::db_repo::{get_records, Records};
 
 fn main() -> color_eyre::Result<()> {
@@ -89,25 +89,22 @@ impl App {
             .bottom_margin(1);
         let records = get_records().unwrap_or_else(|_| Records::new(&vec!()));
         let rows = records.clone().records.iter().map(|r| Row::new(r.vec_of_fields())).collect::<Vec<Row>>();
-        let store_text = format!("Store: {:.2}", records.store_total);
-        let beer_text = format!("Beer: {:.2}", records.beer_total);
-        let allos_text = format!("Allos: {:.2}", records.allos_total);
-        let total_text = format!("Total: {:.2}", records.all_total);
+        let cloned_records = records.clone();
         let footer = Row::new([
-            "",
-            &store_text,
-            &beer_text,
-            &allos_text,
-            &total_text,
+            format!("Total: {:.2}", cloned_records.all_total),
+            format!("Store: {:.2}", cloned_records.store_total),
+            format!("Beer: {:.2}", cloned_records.beer_total),
+            format!("Allos: {:.2}", cloned_records.allos_total),
+            "".to_string(),
         ]);
 
 
         let widths = [
             Constraint::Percentage(10),
-            Constraint::Percentage(20),
-            Constraint::Percentage(20),
-            Constraint::Percentage(20),
-            Constraint::Percentage(30),
+            Constraint::Percentage(10),
+            Constraint::Percentage(10),
+            Constraint::Percentage(10),
+            Constraint::Fill(1),
         ];
         let table = Table::new(rows, widths)
             .header(header)
@@ -117,7 +114,7 @@ impl App {
             .row_highlight_style(Style::new().on_black().bold())
             .column_highlight_style(Color::LightGreen)
             .cell_highlight_style(Style::new().reversed().yellow())
-            .highlight_symbol("+++>");
+            .highlight_symbol("+++>   ");
 
         frame.render_stateful_widget(table, area, table_state);
     }
@@ -155,6 +152,36 @@ impl App {
     fn quit(&mut self) {
         self.running = false;
     }
+
+
+    fn vertical_barchart(temperatures: &[u8]) -> BarChart {
+        let bars: Vec<Bar> = temperatures
+            .iter()
+            .enumerate()
+            .map(|(hour, value)| Self::vertical_bar(hour, value))
+            .collect();
+        let title = Line::from("Weather (Vertical)").centered();
+        BarChart::default()
+            .data(BarGroup::default().bars(&bars))
+            .block(Block::new().title(title))
+            .bar_width(5)
+    }
+
+    fn vertical_bar(hour: usize, temperature: &u8) -> Bar {
+        Bar::default()
+            .value(u64::from(*temperature))
+            .label(Line::from(format!("{hour:>02}:00")))
+            .text_value(format!("{temperature:>3}°"))
+            .style(Self::temperature_style(*temperature))
+            .value_style(Self::temperature_style(*temperature).reversed())
+    }
+
+    fn temperature_style(value: u8) -> Style {
+        let green = (255.0 * (1.0 - f64::from(value - 50) / 40.0)) as u8;
+        let color = Color::Rgb(255, green, 0);
+        Style::new().fg(color)
+    }
+
 }
 
 
