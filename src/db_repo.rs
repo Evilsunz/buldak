@@ -3,8 +3,7 @@ use rand;
 use rand::Rng;
 use rusqlite::{Connection, Result};
 
-#[derive(Debug)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Record {
     pub id: i32,
     pub store: f32,
@@ -26,8 +25,7 @@ impl Record {
     }
 }
 
-#[derive(Debug)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Records{
     pub records: Vec<Record>,
     pub store_total : f32,
