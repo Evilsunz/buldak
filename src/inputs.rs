@@ -25,7 +25,7 @@ pub struct InputsState {
     /// History of recorded messages
     pub messages: Vec<String>,
     pub inputs : Vec<Rect>,
-    pub selected_input : Rect,
+    pub selected_input_index : usize,
 }
 
 pub enum InputMode {
@@ -45,7 +45,7 @@ impl InputsState {
             messages: Vec::new(),
             character_index: 0,
             inputs : vec!(),
-            selected_input: Default::default(),
+            selected_input_index: 0,
         }
     }
 
@@ -60,9 +60,10 @@ impl InputsState {
     }
 
     pub fn move_cursor_to_next_input(&mut self) {
-        println!(" +++++++++++ Next")
-        // let cursor_moved_right = self.character_index.saturating_add(1);
-        // self.character_index = self.clamp_cursor(cursor_moved_right);
+        self.selected_input_index += 1;
+        if self.selected_input_index >= self.inputs.len() {
+            self.selected_input_index = 0;
+        }
     }
 
     pub fn enter_char(&mut self, new_char: char) {
@@ -156,17 +157,15 @@ impl InputsState {
         }
     }
 
-    fn render_cursor(&self, frame: &mut Frame) {
+    fn render_cursor(&mut self, frame: &mut Frame) {
         match self.input_mode {
             InputMode::Normal => {}
             #[allow(clippy::cast_possible_truncation)]
             InputMode::Editing => {
-                if self.selected_input == Default::default() {
-                    let input_area = self.inputs.get(0).unwrap();
-                    frame.set_cursor_position(Position::new(
-                        input_area.x + self.character_index as u16 + 1,
-                        input_area.y + 1, ))
-                }
+                let input_area = self.inputs.get(self.selected_input_index).unwrap();
+                frame.set_cursor_position(Position::new(
+                    input_area.x + self.character_index as u16 + 1,
+                    input_area.y + 1, ))
             }
         }
     }
