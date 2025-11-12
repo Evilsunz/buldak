@@ -60,12 +60,6 @@ impl App {
         Ok(())
     }
 
-    /// Renders the user interface.
-    ///
-    /// This is where you add new widgets. See the following resources for more information:
-    ///
-    /// - <https://docs.rs/ratatui/latest/ratatui/widgets/index.html>
-    /// - <https://github.com/ratatui/ratatui/tree/main/ratatui-widgets/examples>
     fn render(&mut self, frame: &mut Frame, table_state : &mut TableState, inputs_state: &mut InputsState) {
 
         let layout = Layout::vertical([
@@ -99,7 +93,6 @@ impl App {
         Ok(())
     }
 
-    /// Handles the key events and updates the state of [`App`].
     fn on_key_event(&mut self, key: KeyEvent, table_state: &mut TableState, inputs_state: &mut InputsState) {
         match inputs_state.input_mode {
             InputMode::Normal => match (key.modifiers, key.code) {
@@ -120,6 +113,7 @@ impl App {
                 (_, KeyCode::Backspace) => { inputs_state.delete_char(); },
                 (_, KeyCode::Left) => { inputs_state.move_cursor_left(); },
                 (_, KeyCode::Right) => { inputs_state.move_cursor_right(); },
+                (_, KeyCode::Tab) => { inputs_state.move_cursor_to_next_input(); },
                 _ => {}
             }
         }

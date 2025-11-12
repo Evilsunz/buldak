@@ -87,9 +87,6 @@ pub fn get_records() -> Result<(Records)> {
         })
     })?;
     let records = person_iter.map(|r| r.unwrap()).collect::<Vec<Record>>();
-    // for person in result.iter().clone() {
-    //     println!("Found record {:?}", person);
-    // }
     Ok((Records::new(&records)))
 }
 

@@ -1,3 +1,4 @@
+use chrono::{NaiveDate, Utc};
 use color_eyre::owo_colors::OwoColorize;
 use ratatui::{
     layout::{Constraint, Layout, Position},
@@ -8,17 +9,23 @@ use ratatui::{
 };
 use ratatui::layout::Rect;
 use ratatui::widgets::ListState;
+use crate::db_repo::Record;
 
 /// App holds the state of the application
 pub struct InputsState {
-    /// Current value of the input box
-    pub input: String,
+    pub date_now : NaiveDate,
+    pub store: String,
+    pub beer: String,
+    pub allos: String,
+    pub comments: String,
     /// Position of cursor in the editor area.
     pub character_index: usize,
     /// Current input mode
     pub input_mode: InputMode,
     /// History of recorded messages
     pub messages: Vec<String>,
+    pub inputs : Vec<Rect>,
+    pub selected_input : Rect,
 }
 
 pub enum InputMode {
@@ -27,12 +34,18 @@ pub enum InputMode {
 }
 
 impl InputsState {
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            input: String::new(),
+            date_now : Utc::now().date_naive(),
+            store: String::new(),
+            beer: String::new(),
+            allos: String::new(),
+            comments: String::new(),
             input_mode: InputMode::Normal,
             messages: Vec::new(),
             character_index: 0,
+            inputs : vec!(),
+            selected_input: Default::default(),
         }
     }
 
@@ -46,9 +59,15 @@ impl InputsState {
         self.character_index = self.clamp_cursor(cursor_moved_right);
     }
 
+    pub fn move_cursor_to_next_input(&mut self) {
+        println!(" +++++++++++ Next")
+        // let cursor_moved_right = self.character_index.saturating_add(1);
+        // self.character_index = self.clamp_cursor(cursor_moved_right);
+    }
+
     pub fn enter_char(&mut self, new_char: char) {
         let index = self.byte_index();
-        self.input.insert(index, new_char);
+        self.store.insert(index, new_char);
         self.move_cursor_right();
     }
 
@@ -57,11 +76,11 @@ impl InputsState {
     /// Since each character in a string can be contain multiple bytes, it's necessary to calculate
     /// the byte index based on the index of the character.
     fn byte_index(&self) -> usize {
-        self.input
+        self.store
             .char_indices()
             .map(|(i, _)| i)
             .nth(self.character_index)
-            .unwrap_or(self.input.len())
+            .unwrap_or(self.store.len())
     }
 
     pub fn delete_char(&mut self) {
@@ -75,19 +94,19 @@ impl InputsState {
             let from_left_to_current_index = current_index - 1;
 
             // Getting all characters before the selected character.
-            let before_char_to_delete = self.input.chars().take(from_left_to_current_index);
+            let before_char_to_delete = self.store.chars().take(from_left_to_current_index);
             // Getting all characters after selected character.
-            let after_char_to_delete = self.input.chars().skip(current_index);
+            let after_char_to_delete = self.store.chars().skip(current_index);
 
             // Put all characters together except the selected one.
             // By leaving the selected one out, it is forgotten and therefore deleted.
-            self.input = before_char_to_delete.chain(after_char_to_delete).collect();
+            self.store = before_char_to_delete.chain(after_char_to_delete).collect();
             self.move_cursor_left();
         }
     }
 
     fn clamp_cursor(&self, new_cursor_pos: usize) -> usize {
-        new_cursor_pos.clamp(0, self.input.chars().count())
+        new_cursor_pos.clamp(0, self.store.chars().count())
     }
 
     fn reset_cursor(&mut self) {
@@ -95,27 +114,28 @@ impl InputsState {
     }
 
     pub fn submit_message(&mut self) {
-        self.messages.push(self.input.clone());
-        self.input.clear();
+        self.messages.push(self.store.clone());
+        self.store.clear();
         self.reset_cursor();
     }
 
-    pub fn render(&self, frame: &mut Frame, area: Rect) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect) {
         let vertical = Layout::vertical([
             Constraint::Length(1),
             Constraint::Length(3),
             Constraint::Min(1),
         ]);
         let [help_area, input_area, messages_area] = vertical.areas(area);
-        let [left_input, center_input, right_input] = Layout::horizontal([
-            Constraint::Percentage(30),
-            Constraint::Percentage(30),
-            Constraint::Percentage(30),
+        let [date, left_input, center_input, right_input] = Layout::horizontal([
+            Constraint::Percentage(25),
+            Constraint::Percentage(25),
+            Constraint::Percentage(25),
+            Constraint::Percentage(25),
         ]).areas(input_area);
 
         self.render_help_area(frame, help_area);
-        self.render_input_areas(frame, &[left_input, center_input, right_input]);
-        self.render_cursor(frame, input_area);
+        self.render_input_areas(frame, &[date ,left_input, center_input, right_input]);
+        self.render_cursor(frame);
         self.render_messages_area(frame, messages_area);
     }
 
@@ -126,21 +146,28 @@ impl InputsState {
         frame.render_widget(help_message, area);
     }
 
-    fn render_input_areas(&self, frame: &mut Frame, areas: &[Rect]) {
-        for &area in areas {
+    fn render_input_areas(&mut self, frame: &mut Frame, areas: &[Rect]) {
+        let date = self.create_date_paragraph();
+        frame.render_widget(date, areas[0]);
+        self.inputs.extend_from_slice(&areas[1..]);
+        for &area in &areas[1..] {
             let input = self.create_input_paragraph();
             frame.render_widget(input, area);
         }
     }
 
-    fn render_cursor(&self, frame: &mut Frame, input_area: Rect) {
+    fn render_cursor(&self, frame: &mut Frame) {
         match self.input_mode {
             InputMode::Normal => {}
             #[allow(clippy::cast_possible_truncation)]
-            InputMode::Editing => frame.set_cursor_position(Position::new(
-                input_area.x + self.character_index as u16 + 1,
-                input_area.y + 1,
-            )),
+            InputMode::Editing => {
+                if self.selected_input == Default::default() {
+                    let input_area = self.inputs.get(0).unwrap();
+                    frame.set_cursor_position(Position::new(
+                        input_area.x + self.character_index as u16 + 1,
+                        input_area.y + 1, ))
+                }
+            }
         }
     }
 
@@ -182,11 +209,18 @@ impl InputsState {
     }
 
     fn create_input_paragraph(&self) -> Paragraph {
-        Paragraph::new(self.input.as_str())
+        Paragraph::new(self.store.as_str())
             .style(match self.input_mode {
                 InputMode::Normal => Style::default().green(),
                 InputMode::Editing => Style::default().fg(Color::Yellow),
             })
             .block(Block::bordered().title("Input"))
     }
+
+    fn create_date_paragraph(&self) -> Paragraph {
+        Paragraph::new(self.date_now.to_string())
+            .style(Style::default().green())
+            .block(Block::bordered().title("Date"))
+    }
+
 }
