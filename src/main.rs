@@ -3,19 +3,17 @@ mod table;
 mod chart;
 mod inputs;
 
-use color_eyre::owo_colors::OwoColorize;
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{
     DefaultTerminal, Frame,
     text::Line,
-    widgets::{Block, Paragraph},
 };
-use ratatui::style::{Color, Style, Stylize};
-use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::style::{Stylize};
+use ratatui::layout::{Constraint, Layout};
 use ratatui::prelude::Span;
-use ratatui::widgets::{Bar, BarChart, BarGroup, Cell, Row, Table, TableState};
-use crate::db_repo::{delete_all, get_records, RecordsHolder};
+use ratatui::widgets::{TableState};
+use crate::db_repo::{delete_all};
 use crate::inputs::{InputMode, InputsState};
 use crate::table::render_table;
 
@@ -104,7 +102,7 @@ impl App {
                 (_, KeyCode::Char('g')) => table_state.select_first(),
                 (_, KeyCode::Char('G')) => table_state.select_last(),
                 (_, KeyCode::Char('e')) => { inputs_state.input_mode = InputMode::Editing; },
-                (_, KeyCode::Char('[')) => { delete_all(); },
+                (_, KeyCode::Char('[')) => { let _ = delete_all(); },
                 _ => {}
             }
             InputMode::Editing => match (key.modifiers, key.code) {

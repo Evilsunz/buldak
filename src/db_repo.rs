@@ -1,9 +1,8 @@
-use chrono::{NaiveDate, Utc, NaiveDateTime, Duration};
-use rand;
-use rand::Rng;
+use chrono::{NaiveDate};
 use rusqlite::{Connection, Result};
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Record {
     pub id: i32,
     pub store: f32,
@@ -76,7 +75,7 @@ pub fn delete_all() -> Result<usize> {
     )
 }
 
-pub fn get_records() -> Result<(RecordsHolder)> {
+pub fn get_records() -> Result<RecordsHolder> {
     let conn = Connection::open("./buldak.sqlite3")?;
 
     let mut stmt = conn.prepare("SELECT id, store, beer, allos, comment, date FROM records")?;
@@ -91,7 +90,7 @@ pub fn get_records() -> Result<(RecordsHolder)> {
         })
     })?;
     let records = person_iter.map(|r| r.unwrap()).collect::<Vec<Record>>();
-    Ok((RecordsHolder::new(&records)))
+    Ok(RecordsHolder::new(&records))
 }
 
 pub fn convert_to_f32(str : &str) -> f32{

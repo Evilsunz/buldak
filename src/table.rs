@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use chrono::{Date, NaiveDate};
+use chrono::{NaiveDate};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Rect};
 use ratatui::prelude::{Color, Style};

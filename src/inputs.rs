@@ -1,31 +1,22 @@
 use crate::db_repo::{convert_to_f32, save_record, Record};
 use chrono::{NaiveDate, Utc};
-use color_eyre::owo_colors::OwoColorize;
-use crossterm::event::{Event, KeyEvent};
+use crossterm::event::{KeyEvent};
 use ratatui::layout::Rect;
-use ratatui::widgets::{Borders, ListState};
+use ratatui::widgets::{Borders};
 use ratatui::{
-    DefaultTerminal, Frame,
-    layout::{Constraint, Layout, Position},
+    Frame,
+    layout::{Constraint, Layout},
     style::{Color, Modifier, Style, Stylize},
     text::{Line, Span, Text},
-    widgets::{Block, List, ListItem, Paragraph},
+    widgets::{Block, Paragraph},
 };
-use tui_textarea::{CursorMove, Input, TextArea};
+use tui_textarea::{TextArea};
 
 /// App holds the state of the application
 pub struct InputsState<'a> {
     pub date_now: NaiveDate,
-    pub store: String,
-    pub beer: String,
-    pub allos: String,
-    pub comments: String,
-    /// Position of cursor in the editor area.
-    pub character_index: usize,
     /// Current input mode
     pub input_mode: InputMode,
-    /// History of recorded messages
-    pub messages: Vec<String>,
     pub inputs: Vec<TextAreaHolder<'a>>,
     pub selected_input_index: usize,
 }
@@ -68,14 +59,14 @@ impl<'a> TextAreaHolder<'a> {
         self.error_message.clone()
     }
 
-    pub fn get_block<'b>(&self) -> Block {
+    pub fn get_block<'b>(&self) -> Block<'_> {
         if self.error_message.is_empty() {
-            return Block::default()
+            Block::default()
                 .borders(Borders::ALL)
                 .style(Style::default().fg(Color::Green))
                 .title(self.title.as_str()).clone()
         } else {
-            return Block::default()
+            Block::default()
                 .borders(Borders::ALL)
                 .border_style(Color::LightRed)
                 .title_style(Color::Red)
@@ -103,13 +94,7 @@ impl InputsState<'_> {
     pub fn new() -> Self {
         Self {
             date_now: Utc::now().date_naive(),
-            store: String::new(),
-            beer: String::new(),
-            allos: String::new(),
-            comments: String::new(),
             input_mode: InputMode::Normal,
-            messages: Vec::new(),
-            character_index: 0,
             inputs: vec![
                 TextAreaHolder::new("Προϊόντα"),
                 TextAreaHolder::new("Μπύρα"),
@@ -138,7 +123,7 @@ impl InputsState<'_> {
 
     pub fn enter_char(&mut self, key: KeyEvent) {
         let text_area = self.inputs.get_mut(self.selected_input_index).unwrap();
-        let result = text_area.text_area.input(key);
+        text_area.text_area.input(key);
     }
 
     pub fn submit_message(&mut self) {
@@ -147,8 +132,8 @@ impl InputsState<'_> {
         let allos_price  = self.inputs.get(2).unwrap().text_area.lines()[0].clone();
         let comments  = self.inputs.get(3).unwrap().text_area.lines()[0].clone();
         let mut store = if store_price.is_empty() {0.0} else { convert_to_f32(&store_price)};
-        let mut beer = if beer_price.is_empty() {0.0} else { convert_to_f32(&beer_price)};;
-        let allos = if allos_price.is_empty() {0.0} else { convert_to_f32(&allos_price)};;
+        let mut beer = if beer_price.is_empty() {0.0} else { convert_to_f32(&beer_price)};
+        let allos = if allos_price.is_empty() {0.0} else { convert_to_f32(&allos_price)};
 
         if beer < 0.0 {
             store += beer;
@@ -163,7 +148,7 @@ impl InputsState<'_> {
             comments,
             date: self.date_now,
         };
-        save_record(&record);
+        let _ =save_record(&record);
         self.inputs_to_default()
     }
 
@@ -171,9 +156,8 @@ impl InputsState<'_> {
         let vertical = Layout::vertical([
             Constraint::Length(1),
             Constraint::Length(3),
-            Constraint::Min(1),
         ]);
-        let [help_area, input_area, messages_area] = vertical.areas(area);
+        let [help_area, input_area] = vertical.areas(area);
         let [date, left_input, center_input, right_input,comments_input] = Layout::horizontal([
             Constraint::Percentage(20),
             Constraint::Percentage(20),
@@ -185,7 +169,7 @@ impl InputsState<'_> {
         self.render_help_area(frame, help_area);
         self.render_input_areas(frame, &[date, left_input, center_input, right_input, comments_input]);
         self.activate_input(frame, &[left_input, center_input, right_input, comments_input]);
-        self.render_messages_area(frame, messages_area);
+        //self.render_messages_area(frame, messages_area);
     }
 
     fn render_help_area(&self, frame: &mut Frame, area: Rect) {
@@ -199,10 +183,10 @@ impl InputsState<'_> {
         let date = self.create_date_paragraph();
         frame.render_widget(date, areas[0]);
         for (i, rect) in areas[1..].iter().enumerate() {
-            let mut text_area_holder = &mut self.inputs.get_mut(i).unwrap();
+            let text_area_holder = &mut self.inputs.get_mut(i).unwrap();
             let block = text_area_holder.get_block();
             //TODO wtf clone ?????
-            let mut text_area = &mut text_area_holder.text_area.clone();
+            let text_area = &mut text_area_holder.text_area.clone();
             text_area.set_cursor_line_style(Style::default());
             if !text_area_holder.no_validation {
                 text_area.set_placeholder_text("Enter a valid summ (e.g. 1.56)");
@@ -219,7 +203,7 @@ impl InputsState<'_> {
             InputMode::Editing => {
                 let text_area_holder = &mut self.inputs.get_mut(self.selected_input_index).unwrap();
                 let title = text_area_holder.get_title();
-                let mut text_area = &mut text_area_holder.text_area;
+                let text_area = &mut text_area_holder.text_area;
                 text_area
                     .set_cursor_line_style(Style::default().add_modifier(Modifier::UNDERLINED));
                 text_area.set_cursor_style(Style::default().add_modifier(Modifier::REVERSED));
@@ -234,21 +218,7 @@ impl InputsState<'_> {
         }
     }
 
-    fn render_messages_area(&self, frame: &mut Frame, area: Rect) {
-        let messages: Vec<ListItem> = self
-            .messages
-            .iter()
-            .enumerate()
-            .map(|(i, m)| {
-                let content = Line::from(Span::raw(format!("{i}: {m}")));
-                ListItem::new(content)
-            })
-            .collect();
-        let messages = List::new(messages).block(Block::bordered().title("Messages"));
-        frame.render_widget(messages, area);
-    }
-
-    fn create_help_message(&self) -> (Vec<Span>, Style) {
+    fn create_help_message(&self) -> (Vec<Span<'_>>, Style) {
         match self.input_mode {
             InputMode::Normal => (
                 vec![
@@ -271,7 +241,7 @@ impl InputsState<'_> {
         }
     }
 
-    fn create_date_paragraph(&self) -> Paragraph {
+    fn create_date_paragraph(&self) -> Paragraph<'_> {
         Paragraph::new(self.date_now.to_string())
             .style(Style::default().green())
             .block(Block::bordered().title("Date"))
