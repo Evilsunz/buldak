@@ -36,14 +36,6 @@ pub struct Records{
 
 impl Record{
 
-    pub fn get_day_summary(&self, recs: &[Record]) -> (NaiveDate, f32) {
-        (self.date , self.calculate_daily_total())
-    }
-
-    fn calculate_daily_total(&self) -> f32 {
-        self.store + self.beer + self.allos
-    }
-
 }
 
 impl Records {
