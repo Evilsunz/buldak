@@ -15,8 +15,7 @@ use ratatui::style::{Color, Style, Stylize};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::prelude::Span;
 use ratatui::widgets::{Bar, BarChart, BarGroup, Cell, Row, Table, TableState};
-use tui_textarea::Input;
-use crate::db_repo::{delete_all, get_records, Records};
+use crate::db_repo::{delete_all, get_records, RecordsHolder};
 use crate::inputs::{InputMode, InputsState};
 use crate::table::render_table;
 
@@ -112,7 +111,9 @@ impl App {
                 (_, KeyCode::Esc) => { inputs_state.input_mode = InputMode::Normal;
                                        inputs_state.selected_input_index = 0 },
                 (_, KeyCode::Enter) => { inputs_state.submit_message();
-                                         inputs_state.inputs_to_default()
+                                         inputs_state.inputs_to_default();
+                                         inputs_state.input_mode = InputMode::Normal;
+                                         inputs_state.selected_input_index = 0
                 },
                 (_, KeyCode::Tab) => { inputs_state.move_cursor_to_next_input(); },
                 _ => { inputs_state.enter_char(key); },

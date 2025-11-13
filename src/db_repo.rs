@@ -26,7 +26,7 @@ impl Record {
 }
 
 #[derive(Debug, Clone)]
-pub struct Records{
+pub struct RecordsHolder {
     pub records: Vec<Record>,
     pub store_total : f32,
     pub beer_total : f32,
@@ -34,15 +34,11 @@ pub struct Records{
     pub all_total : f32,
 }
 
-impl Record{
+impl RecordsHolder {
 
-}
-
-impl Records {
-
-    pub fn new(recs: &Vec<Record>) -> Records {
+    pub fn new(recs: &Vec<Record>) -> RecordsHolder {
         let (store_total, beer_total, allos_total, all_total) = Self::calculate_totals(recs);
-        Records {
+        RecordsHolder {
             records: recs.clone(),
             store_total,
             beer_total,
@@ -74,14 +70,13 @@ pub fn save_record(record: &Record) -> Result<usize> {
 
 pub fn delete_all() -> Result<usize> {
     let conn = Connection::open("./buldak.sqlite3")?;
-    println!("Delete all records");
     conn.execute(
         "delete from records",
         (),
     )
 }
 
-pub fn get_records() -> Result<(Records)> {
+pub fn get_records() -> Result<(RecordsHolder)> {
     let conn = Connection::open("./buldak.sqlite3")?;
 
     let mut stmt = conn.prepare("SELECT id, store, beer, allos, comment, date FROM records")?;
@@ -96,7 +91,7 @@ pub fn get_records() -> Result<(Records)> {
         })
     })?;
     let records = person_iter.map(|r| r.unwrap()).collect::<Vec<Record>>();
-    Ok((Records::new(&records)))
+    Ok((RecordsHolder::new(&records)))
 }
 
 pub fn convert_to_f32(str : &str) -> f32{
@@ -114,19 +109,3 @@ pub fn convert_to_f32(str : &str) -> f32{
 //         )",
 // (), // empty list of parameters.
 // )?;
-// let mut rng = rand::rng();
-// for i in 1..20 {
-// let me = Record {
-// id: 0,
-// store: f32::trunc(rng.random_range(0.0..100.0)  * 100.0) / 100.0,
-// beer: f32::trunc(rng.random_range(0.0..100.0)  * 100.0) / 100.0,
-// allos:f32::trunc(rng.random_range(0.0..100.0)  * 100.0) / 100.0,
-// comments: String::new(),
-// date: Utc::now().date_naive() + Duration::days(i),
-// };
-// conn.execute(
-// "INSERT INTO person (store, beer, allos, comment, date) VALUES (?1, ?2, ?3, ?4, ?5)",
-// (&me.store, &me.beer, &me.allos, &me.comments, &me.date),
-// )?;
-// }
-
