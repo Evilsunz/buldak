@@ -16,7 +16,7 @@ use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::prelude::Span;
 use ratatui::widgets::{Bar, BarChart, BarGroup, Cell, Row, Table, TableState};
 use tui_textarea::Input;
-use crate::db_repo::{get_records, Records};
+use crate::db_repo::{delete_all, get_records, Records};
 use crate::inputs::{InputMode, InputsState};
 use crate::table::render_table;
 
@@ -105,12 +105,15 @@ impl App {
                 (_, KeyCode::Char('g')) => table_state.select_first(),
                 (_, KeyCode::Char('G')) => table_state.select_last(),
                 (_, KeyCode::Char('e')) => { inputs_state.input_mode = InputMode::Editing; },
+                (_, KeyCode::Char('[')) => { delete_all(); },
                 _ => {}
             }
             InputMode::Editing => match (key.modifiers, key.code) {
                 (_, KeyCode::Esc) => { inputs_state.input_mode = InputMode::Normal;
                                        inputs_state.selected_input_index = 0 },
-                (_, KeyCode::Enter) => { inputs_state.submit_message(); },
+                (_, KeyCode::Enter) => { inputs_state.submit_message();
+                                         inputs_state.inputs_to_default()
+                },
                 (_, KeyCode::Tab) => { inputs_state.move_cursor_to_next_input(); },
                 _ => { inputs_state.enter_char(key); },
             }

@@ -64,10 +64,27 @@ impl Records {
 
 }
 
+pub fn save_record(record: &Record) -> Result<usize> {
+    let conn = Connection::open("./buldak.sqlite3")?;
+    conn.execute(
+        "INSERT INTO records (store,beer,allos,comment,date) VALUES (?1, ?2, ?3, ?4, ?5)",
+        (record.store, record.beer, record.allos, &record.comments, &record.date ),
+    )
+}
+
+pub fn delete_all() -> Result<usize> {
+    let conn = Connection::open("./buldak.sqlite3")?;
+    println!("Delete all records");
+    conn.execute(
+        "delete from records",
+        (),
+    )
+}
+
 pub fn get_records() -> Result<(Records)> {
     let conn = Connection::open("./buldak.sqlite3")?;
 
-    let mut stmt = conn.prepare("SELECT id, store, beer, allos, comment, date FROM person")?;
+    let mut stmt = conn.prepare("SELECT id, store, beer, allos, comment, date FROM records")?;
     let person_iter = stmt.query_map([], |row| {
         Ok(Record {
             id: row.get(0)?,
@@ -82,6 +99,9 @@ pub fn get_records() -> Result<(Records)> {
     Ok((Records::new(&records)))
 }
 
+pub fn convert_to_f32(str : &str) -> f32{
+    str.parse::<f32>().unwrap()
+}
 
 // conn.execute(
 // "CREATE TABLE person (
