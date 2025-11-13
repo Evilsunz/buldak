@@ -234,7 +234,7 @@ impl InputsState<'_> {
                     "Esc".green().bold(),
                     " to stop editing, ".green().into(),
                     "Enter".green().bold(),
-                    " to record the message".green().into(),
+                    " to record the expinses".green().into(),
                 ],
                 Style::default(),
             ),
@@ -244,7 +244,7 @@ impl InputsState<'_> {
     fn create_date_paragraph(&self) -> Paragraph<'_> {
         Paragraph::new(self.date_now.to_string())
             .style(Style::default().green())
-            .block(Block::bordered().title("Date"))
+            .block(Block::bordered().title("Ημερομηνία"))
     }
 
 }
