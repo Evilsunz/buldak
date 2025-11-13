@@ -60,7 +60,7 @@ impl RecordsHolder {
 }
 
 pub fn save_record(record: &Record) -> Result<usize> {
-    let conn = Connection::open("./buldak.sqlite3")?;
+    let conn = get_connection();
     conn.execute(
         "INSERT INTO records (store,beer,allos,comment,date) VALUES (?1, ?2, ?3, ?4, ?5)",
         (record.store, record.beer, record.allos, &record.comments, &record.date ),
@@ -68,7 +68,7 @@ pub fn save_record(record: &Record) -> Result<usize> {
 }
 
 pub fn delete_all() -> Result<usize> {
-    let conn = Connection::open("./buldak.sqlite3")?;
+    let conn = get_connection();
     conn.execute(
         "delete from records",
         (),
@@ -76,7 +76,7 @@ pub fn delete_all() -> Result<usize> {
 }
 
 pub fn get_records() -> Result<RecordsHolder> {
-    let conn = Connection::open("./buldak.sqlite3")?;
+    let conn = get_connection();
 
     let mut stmt = conn.prepare("SELECT id, store, beer, allos, comment, date FROM records")?;
     let person_iter = stmt.query_map([], |row| {
@@ -97,14 +97,18 @@ pub fn convert_to_f32(str : &str) -> f32{
     str.parse::<f32>().unwrap()
 }
 
-// conn.execute(
-// "CREATE TABLE person (
-//             id    INTEGER PRIMARY KEY,
-//             store  FLOAT,
-//             beer  FLOAT,
-//             allos  FLOAT,
-//             comment  TEXT,
-//             date  TEXT
-//         )",
-// (), // empty list of parameters.
-// )?;
+fn get_connection() -> Connection {
+    let conn = Connection::open("./buldak.sqlite3").unwrap();
+    let _ =conn.execute(
+    "CREATE TABLE if not exists records (
+                id    INTEGER PRIMARY KEY,
+                store  FLOAT,
+                beer  FLOAT,
+                allos  FLOAT,
+                comment  TEXT,
+                date  TEXT
+            )",
+    (),
+    );
+    conn
+}
