@@ -1,3 +1,4 @@
+use std::fs;
 use chrono::{NaiveDate};
 use rusqlite::{Connection, Result};
 
@@ -94,9 +95,14 @@ pub fn get_records() -> Result<RecordsHolder> {
 }
 
 fn get_connection() -> Connection {
+     Connection::open("./buldak.sqlite3").unwrap()
+}
+
+pub fn init_db(){
+    let _ = fs::copy("./buldak.sqlite3", "./buldak_backup.sqlite3");
     let conn = Connection::open("./buldak.sqlite3").unwrap();
     let _ =conn.execute(
-    "CREATE TABLE if not exists records (
+        "CREATE TABLE if not exists records (
                 id    INTEGER PRIMARY KEY,
                 store  FLOAT,
                 beer  FLOAT,
@@ -104,7 +110,6 @@ fn get_connection() -> Connection {
                 comment  TEXT,
                 date  TEXT
             )",
-    (),
+        (),
     );
-    conn
 }

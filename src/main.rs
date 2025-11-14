@@ -6,19 +6,17 @@ mod input_validator;
 
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
-use ratatui::{
-    DefaultTerminal, Frame,
-    text::Line,
-};
+use ratatui::{DefaultTerminal, Frame, text::Line};
 use ratatui::style::{Stylize};
 use ratatui::layout::{Constraint, Layout};
 use ratatui::prelude::Span;
 use ratatui::widgets::{TableState};
-use crate::db_repo::{delete_all};
+use crate::db_repo::{delete_all, init_db};
 use crate::inputs::{InputMode, InputsState};
 use crate::table::render_table;
 
 fn main() -> color_eyre::Result<()> {
+    init_db();
     color_eyre::install()?;
     let terminal = ratatui::init();
     let result = App::new().run(terminal);

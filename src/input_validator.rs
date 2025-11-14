@@ -6,12 +6,12 @@ pub fn validate(input: &str, no_validation : bool ) -> String {
         no_validation  ||
         (input.contains("+") && input.find("+").unwrap() > 0) {
         //all ok
-        return "".to_string()
+        return String::new()
     }
     if let Err(err) = input.parse::<f64>() {
         format!("{}", err)
     } else {
-        "".to_string()
+        String::new()
     }
 }
 
