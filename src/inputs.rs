@@ -1,4 +1,4 @@
-use crate::db_repo::{save_record, Record};
+use crate::db_repo::{save_record};
 use chrono::{NaiveDate, Utc};
 use crossterm::event::{KeyEvent};
 use ratatui::layout::Rect;
@@ -11,7 +11,7 @@ use ratatui::{
     widgets::{Block, Paragraph},
 };
 use tui_textarea::{TextArea};
-use crate::input_validator::{convert_to_f32, into_record, validate};
+use crate::input_validator::{into_record, validate};
 
 /// App holds the state of the application
 pub struct InputsState<'a> {
