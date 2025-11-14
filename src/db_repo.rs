@@ -93,20 +93,6 @@ pub fn get_records() -> Result<RecordsHolder> {
     Ok(RecordsHolder::new(&records))
 }
 
-pub fn convert_to_f32(str : &str) -> f32{
-    match str.find('+') {
-        Some(_) => {
-            let result = str.split("+").into_iter()
-            .filter(|v| !v.is_empty())
-            .map(|v| v.parse::<f32>().unwrap())
-            .sum::<f32>();
-            //TODO Oh my
-            format!("{:.2}", result).parse::<f32>().unwrap()
-        }
-        None => {str.parse::<f32>().unwrap()}
-    }
-}
-
 fn get_connection() -> Connection {
     let conn = Connection::open("./buldak.sqlite3").unwrap();
     let _ =conn.execute(

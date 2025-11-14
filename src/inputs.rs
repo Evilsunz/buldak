@@ -1,4 +1,4 @@
-use crate::db_repo::{convert_to_f32, save_record, Record};
+use crate::db_repo::{save_record, Record};
 use chrono::{NaiveDate, Utc};
 use crossterm::event::{KeyEvent};
 use ratatui::layout::Rect;
@@ -11,6 +11,7 @@ use ratatui::{
     widgets::{Block, Paragraph},
 };
 use tui_textarea::{TextArea};
+use crate::input_validator::{convert_to_f32, into_record, validate};
 
 /// App holds the state of the application
 pub struct InputsState<'a> {
@@ -73,23 +74,7 @@ impl<'a> TextAreaHolder<'a> {
                 .title(self.title.as_str()).clone()
         }
     }
-
-    fn validate(&mut self) -> bool {
-        if self.text_area.lines()[0].is_empty() ||
-            self.no_validation  ||
-            (self.text_area.lines()[0].contains("+") && self.text_area.lines()[0].find("+").unwrap() > 0) {
-            //all ok
-            self.error_message = "".to_string();
-            return true
-        }
-        if let Err(err) = self.text_area.lines()[0].parse::<f64>() {
-            self.error_message = format!("{}", err);
-            false
-        } else {
-            self.error_message = "".to_string();
-            true
-        }
-    }
+    
 }
 
 impl InputsState<'_> {
@@ -116,7 +101,7 @@ impl InputsState<'_> {
 
     pub fn move_cursor_to_next_input(&mut self) {
         let text_area = self.inputs.get_mut(self.selected_input_index).unwrap();
-        text_area.validate();
+        text_area.error_message = validate(text_area.text_area.lines()[0].as_str(), text_area.no_validation);
         self.selected_input_index += 1;
         if self.selected_input_index >= self.inputs.len() {
             self.selected_input_index = 0;
@@ -129,27 +114,13 @@ impl InputsState<'_> {
     }
 
     pub fn submit_message(&mut self) {
-        let store_price  = self.inputs.get(0).unwrap().text_area.lines()[0].clone();
-        let beer_price  = self.inputs.get(1).unwrap().text_area.lines()[0].clone();
-        let allos_price  = self.inputs.get(2).unwrap().text_area.lines()[0].clone();
-        let comments  = self.inputs.get(3).unwrap().text_area.lines()[0].clone();
-        let mut store = if store_price.is_empty() {0.0} else { convert_to_f32(&store_price)};
-        let mut beer = if beer_price.is_empty() {0.0} else { convert_to_f32(&beer_price)};
-        let allos = if allos_price.is_empty() {0.0} else { convert_to_f32(&allos_price)};
-
-        if beer < 0.0 {
-            store += beer;
-            beer = beer.abs();
-        }
-        store = format!("{:.2}", store).parse::<f32>().unwrap();
-        let record = Record {
-            id: 0,
-            store,
-            beer,
-            allos,
-            comments,
-            date: self.date_now,
-        };
+        let store_price  = &self.inputs.get(0).unwrap().text_area.lines()[0].clone();
+        let beer_price  = &self.inputs.get(1).unwrap().text_area.lines()[0].clone();
+        let allos_price  = &self.inputs.get(2).unwrap().text_area.lines()[0].clone();
+        let comments  = &self.inputs.get(3).unwrap().text_area.lines()[0].clone();
+       
+        let record = into_record(store_price, beer_price, allos_price , comments, self.date_now);
+        
         let _ =save_record(&record);
         self.inputs_to_default()
     }

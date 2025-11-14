@@ -2,7 +2,7 @@ mod db_repo;
 mod table;
 mod chart;
 mod inputs;
-mod input_parser;
+mod input_validator;
 
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
