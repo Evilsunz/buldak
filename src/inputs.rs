@@ -75,7 +75,9 @@ impl<'a> TextAreaHolder<'a> {
     }
 
     fn validate(&mut self) -> bool {
-        if self.text_area.lines()[0].is_empty() || self.no_validation {
+        if self.text_area.lines()[0].is_empty() ||
+            self.no_validation  ||
+            (self.text_area.lines()[0].contains("+") && self.text_area.lines()[0].find("+").unwrap() > 0) {
             //all ok
             self.error_message = "".to_string();
             return true
@@ -139,7 +141,7 @@ impl InputsState<'_> {
             store += beer;
             beer = beer.abs();
         }
-
+        store = format!("{:.2}", store).parse::<f32>().unwrap();
         let record = Record {
             id: 0,
             store,
@@ -189,7 +191,9 @@ impl InputsState<'_> {
             let text_area = &mut text_area_holder.text_area.clone();
             text_area.set_cursor_line_style(Style::default());
             if !text_area_holder.no_validation {
-                text_area.set_placeholder_text("Enter a valid summ (e.g. 1.56)");
+                text_area.set_placeholder_text("Εισαγάγετε ένα έγκυρο άθροισμα (π.χ. 1,56)");
+            } else {
+                text_area.set_placeholder_text("Προσθήκη σχολίων");
             }
             text_area.set_block(block);
             frame.render_widget(&*text_area, *rect);
