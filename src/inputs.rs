@@ -74,7 +74,7 @@ impl<'a> TextAreaHolder<'a> {
                 .title(self.title.as_str()).clone()
         }
     }
-    
+
 }
 
 impl InputsState<'_> {
@@ -108,7 +108,7 @@ impl InputsState<'_> {
         }
     }
 
-    pub fn enter_char(&mut self, key: KeyEvent) {
+    pub fn input(&mut self, key: KeyEvent) {
         let text_area = self.inputs.get_mut(self.selected_input_index).unwrap();
         text_area.text_area.input(key);
     }
@@ -118,9 +118,9 @@ impl InputsState<'_> {
         let beer_price  = &self.inputs.get(1).unwrap().text_area.lines()[0].clone();
         let allos_price  = &self.inputs.get(2).unwrap().text_area.lines()[0].clone();
         let comments  = &self.inputs.get(3).unwrap().text_area.lines()[0].clone();
-       
+
         let record = into_record(store_price, beer_price, allos_price , comments, self.date_now);
-        
+
         let _ =save_record(&record);
         self.inputs_to_default()
     }
@@ -142,7 +142,6 @@ impl InputsState<'_> {
         self.render_help_area(frame, help_area);
         self.render_input_areas(frame, &[date, left_input, center_input, right_input, comments_input]);
         self.activate_input(frame, &[left_input, center_input, right_input, comments_input]);
-        //self.render_messages_area(frame, messages_area);
     }
 
     fn render_help_area(&self, frame: &mut Frame, area: Rect) {

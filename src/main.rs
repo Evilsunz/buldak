@@ -115,7 +115,7 @@ impl App {
                                          inputs_state.selected_input_index = 0
                 },
                 (_, KeyCode::Tab) => { inputs_state.move_cursor_to_next_input(); },
-                _ => { inputs_state.enter_char(key); },
+                _ => { inputs_state.input(key); },
             }
         }
     }
