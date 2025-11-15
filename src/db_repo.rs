@@ -23,6 +23,11 @@ impl Record {
              self.comments.to_string(),
         )
     }
+
+    pub fn get_day_summary(&self) -> f32 {
+        self.store + self.beer + self.allos
+    }
+
 }
 
 #[derive(Debug, Clone)]
@@ -76,10 +81,10 @@ pub fn delete_all() -> Result<usize> {
     )
 }
 
-pub fn get_records() -> Result<RecordsHolder> {
+pub fn get_records_holder() -> Result<RecordsHolder> {
     let conn = get_connection();
 
-    let mut stmt = conn.prepare("SELECT id, store, beer, allos, comment, date FROM records")?;
+    let mut stmt = conn.prepare("SELECT id, store, beer, allos, comment, date FROM records order by date asc")?;
     let person_iter = stmt.query_map([], |row| {
         Ok(Record {
             id: row.get(0)?,

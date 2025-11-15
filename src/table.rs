@@ -5,13 +5,13 @@ use ratatui::layout::{Constraint, Rect};
 use ratatui::prelude::{Color, Style};
 use ratatui::style::Stylize;
 use ratatui::widgets::{Row, Table, TableState};
-use crate::db_repo::{get_records, RecordsHolder};
+use crate::db_repo::{get_records_holder, RecordsHolder};
 
 pub fn render_table(frame: &mut Frame, area: Rect, table_state: &mut TableState) {
     let header = Row::new(["Ημερομηνία", "Προϊόντα", "Μπύρα", "Αλλος","Σχόλια"])
         .style(Style::new().bold())
         .bottom_margin(1);
-    let response = get_records().unwrap_or_else(|_| RecordsHolder::new(&vec!()));
+    let response = get_records_holder().unwrap_or_else(|_| RecordsHolder::new(&vec!()));
     let rows = response.clone().records.iter().map(|r| Row::new(r.vec_of_fields())).collect::<Vec<Row>>();
     let dayz_total = response.records.iter().map(|r| r.date).collect::<HashSet<NaiveDate>>();
     let footer = Row::new([

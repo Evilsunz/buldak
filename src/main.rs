@@ -11,7 +11,8 @@ use ratatui::style::{Stylize};
 use ratatui::layout::{Constraint, Layout};
 use ratatui::prelude::Span;
 use ratatui::widgets::{TableState};
-use crate::db_repo::{delete_all, init_db};
+use crate::chart::vertical_barchart;
+use crate::db_repo::{delete_all, get_records_holder, init_db};
 use crate::inputs::{InputMode, InputsState};
 use crate::table::render_table;
 
@@ -62,17 +63,18 @@ impl App {
         let layout = Layout::vertical([
             Constraint::Length(1),
             Constraint::Length(30),
-            Constraint::Length(10)
+            Constraint::Length(4),
+            Constraint::Fill(1),
             ]).spacing(1)
             .split(frame.area());
         let title = Line::from_iter([
             Span::from("+++++ BULDAK expences +++++").green().bold().underlined(),
         ]);
-
         frame.render_widget(title.centered(), layout[0]);
         //Table need to maintain its own state (cursor movements so on)
         render_table(frame,layout[1], table_state);
-        inputs_state.render(frame, layout[2])
+        inputs_state.render(frame, layout[2]);
+        frame.render_widget(vertical_barchart(get_records_holder().unwrap()), layout[3]);
     }
 
     /// Reads the crossterm events and updates the state of [`App`].
@@ -101,6 +103,7 @@ impl App {
                 (_, KeyCode::Char('g')) => table_state.select_first(),
                 (_, KeyCode::Char('G')) => table_state.select_last(),
                 (_, KeyCode::Char('e')) => { inputs_state.input_mode = InputMode::Editing; },
+//                (_, KeyCode::Char('d')) => { inputs_state.input_mode = InputMode::Editing; },
                 (_, KeyCode::Char('[')) => { let _ = delete_all(); },
                 _ => {}
             }
