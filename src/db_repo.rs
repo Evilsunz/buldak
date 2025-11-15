@@ -20,6 +20,7 @@ impl Record {
              self.store.to_string(),
              self.beer.to_string(),
              self.allos.to_string(),
+             format!("{:.2}",self.get_day_summary()),
              self.comments.to_string(),
         )
     }

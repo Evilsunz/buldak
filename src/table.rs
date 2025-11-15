@@ -8,7 +8,7 @@ use ratatui::widgets::{Row, Table, TableState};
 use crate::db_repo::{get_records_holder, RecordsHolder};
 
 pub fn render_table(frame: &mut Frame, area: Rect, table_state: &mut TableState) {
-    let header = Row::new(["Ημερομηνία", "Προϊόντα", "Μπύρα", "Αλλος","Σχόλια"])
+    let header = Row::new(["Ημερομηνία", "Προϊόντα", "Μπύρα", "Αλλος", "Σύνολο σε μέρα","Σχόλια"])
         .style(Style::new().bold())
         .bottom_margin(1);
     let response = get_records_holder().unwrap_or_else(|_| RecordsHolder::new(&vec!()));
@@ -24,6 +24,7 @@ pub fn render_table(frame: &mut Frame, area: Rect, table_state: &mut TableState)
 
 
     let widths = [
+        Constraint::Percentage(10),
         Constraint::Percentage(10),
         Constraint::Percentage(10),
         Constraint::Percentage(10),
