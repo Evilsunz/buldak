@@ -1,5 +1,5 @@
 use crate::db_repo::{save_record};
-use chrono::{NaiveDate, Utc};
+use chrono::{Utc};
 use crossterm::event::{KeyEvent};
 use ratatui::layout::Rect;
 use ratatui::widgets::{Borders};
@@ -235,29 +235,31 @@ impl InputsState<'_> {
         match self.input_mode {
             InputMode::Normal => (
                 vec![
-                    "Press ".green().into(),
+                    "Πατήστε ".green().into(),
                     "e".green().bold(),
-                    " to start editing.".green(),
+                    " για να ξεκινήσετε την επεξεργασία. ".green(),
+                    "d".green().bold(),
+                    " για να επεξεργαστείτε την ημερομηνία.".green(),
                 ],
                 Style::default().add_modifier(Modifier::RAPID_BLINK),
             ),
             InputMode::Editing => (
                 vec![
-                    "Press ".green().into(),
+                    "Πατήστε ".green().into(),
                     "Esc".green().bold(),
-                    " to stop editing, ".green().into(),
+                    " για να διακόψετε την επεξεργασία. ".green().into(),
                     "Enter".green().bold(),
-                    " to record the expinses".green().into(),
+                    " για να καταγράψετε τα έξοδα".green().into(),
                 ],
                 Style::default(),
             ),
             InputMode::DateEditing => (
                 vec![
-                    "Press ".green().into(),
+                    "Πατήστε ".green().into(),
                     "Esc".green().bold(),
-                    " to stop editing, ".green().into(),
+                    " για να σταματήσετε την επεξεργασία, ".green().into(),
                     "Enter".green().bold(),
-                    " to record the date".green().into(),
+                    " για να καταγράψετε την ημερομηνία".green().into(),
                 ],
                 Style::default(),
             ),
