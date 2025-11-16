@@ -15,7 +15,7 @@ pub fn validate(input: &str, no_validation : bool ) -> String {
     }
 }
 
-pub fn into_record(store_price : &str,beer_price : &str,allos_price : &str,comments : &str,date : NaiveDate) -> Record {
+pub fn into_record(store_price : &str,beer_price : &str,allos_price : &str,comments : &str,date : &str) -> Record {
     let mut store = convert_to_f32(store_price);
     let mut beer = convert_to_f32(beer_price);
     let allos = convert_to_f32(allos_price);
@@ -25,13 +25,15 @@ pub fn into_record(store_price : &str,beer_price : &str,allos_price : &str,comme
         beer = beer.abs();
     }
     store = format!("{:.2}", store).parse::<f32>().unwrap();
+
+    let naive_date = NaiveDate::parse_from_str(date, "%Y-%m-%d").unwrap();
     Record {
         id: 0,
         store,
         beer,
         allos,
         comments: comments.to_string(),
-        date: date,
+        date: naive_date,
     }
 }
 

@@ -103,7 +103,7 @@ impl App {
                 (_, KeyCode::Char('g')) => table_state.select_first(),
                 (_, KeyCode::Char('G')) => table_state.select_last(),
                 (_, KeyCode::Char('e')) => { inputs_state.input_mode = InputMode::Editing; },
-//                (_, KeyCode::Char('d')) => { inputs_state.input_mode = InputMode::Editing; },
+                (_, KeyCode::Char('d')) => { inputs_state.input_mode = InputMode::DateEditing; },
                 (_, KeyCode::Char('[')) => { let _ = delete_all(); },
                 _ => {}
             }
@@ -117,6 +117,11 @@ impl App {
                 },
                 (_, KeyCode::Tab) => { inputs_state.move_cursor_to_next_input(); },
                 _ => { inputs_state.input(key); },
+            }
+            InputMode::DateEditing => match (key.modifiers, key.code) {
+                (_, KeyCode::Esc) => { inputs_state.input_mode = InputMode::Normal },
+                (_, KeyCode::Tab) => { inputs_state.move_cursor_to_next_input(); },
+                _ => { inputs_state.date_input(key); },
             }
         }
     }

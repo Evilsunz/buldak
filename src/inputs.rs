@@ -15,16 +15,17 @@ use crate::input_validator::{into_record, validate};
 
 /// App holds the state of the application
 pub struct InputsState<'a> {
-    pub date_now: NaiveDate,
     /// Current input mode
     pub input_mode: InputMode,
     pub inputs: Vec<TextAreaHolder<'a>>,
+    pub date_input: TextAreaHolder<'a>,
     pub selected_input_index: usize,
 }
 
 pub enum InputMode {
     Normal,
     Editing,
+    DateEditing,
 }
 
 pub struct TextAreaHolder<'a> {
@@ -51,6 +52,16 @@ impl<'a> TextAreaHolder<'a> {
             error_message: "".to_string(),
             no_validation: true
         }
+    }
+
+    pub fn new_validation_disabled_with_value(title: &str, value : &str) -> Self {
+        let holder = TextAreaHolder {
+            text_area: TextArea::new(vec!(value.to_string())),
+            title: String::from(title),
+            error_message: "".to_string(),
+            no_validation: true
+        };
+        holder
     }
 
     pub fn get_title(&self) -> String {
@@ -80,7 +91,6 @@ impl<'a> TextAreaHolder<'a> {
 impl InputsState<'_> {
     pub fn new() -> Self {
         Self {
-            date_now: Utc::now().date_naive(),
             input_mode: InputMode::Normal,
             inputs: vec![
                 TextAreaHolder::new("Προϊόντα"),
@@ -88,6 +98,7 @@ impl InputsState<'_> {
                 TextAreaHolder::new("Αλλος"),
                 TextAreaHolder::new_validation_disabled("Σχόλια")
             ],
+            date_input: TextAreaHolder::new_validation_disabled_with_value("Ημερομηνία", Utc::now().date_naive().to_string().as_str()),
             selected_input_index: 0,
         }
     }
@@ -113,13 +124,18 @@ impl InputsState<'_> {
         text_area.text_area.input(key);
     }
 
+    pub fn date_input(&mut self, key: KeyEvent) {
+        self.date_input.text_area.input(key);
+    }
+
     pub fn submit_message(&mut self) {
+        let date = &self.date_input.text_area.lines()[0].clone();
         let store_price  = &self.inputs.get(0).unwrap().text_area.lines()[0].clone();
         let beer_price  = &self.inputs.get(1).unwrap().text_area.lines()[0].clone();
         let allos_price  = &self.inputs.get(2).unwrap().text_area.lines()[0].clone();
         let comments  = &self.inputs.get(3).unwrap().text_area.lines()[0].clone();
 
-        let record = into_record(store_price, beer_price, allos_price , comments, self.date_now);
+        let record = into_record(store_price, beer_price, allos_price , comments, date);
 
         let _ =save_record(&record);
         self.inputs_to_default()
@@ -141,7 +157,7 @@ impl InputsState<'_> {
         .areas(input_area);
         self.render_help_area(frame, help_area);
         self.render_input_areas(frame, &[date, left_input, center_input, right_input, comments_input]);
-        self.activate_input(frame, &[left_input, center_input, right_input, comments_input]);
+        self.activate_input(frame, &[left_input, center_input, right_input, comments_input], date);
     }
 
     fn render_help_area(&self, frame: &mut Frame, area: Rect) {
@@ -152,8 +168,8 @@ impl InputsState<'_> {
     }
 
     fn render_input_areas(&mut self, frame: &mut Frame, areas: &[Rect]) {
-        let date = self.create_date_paragraph();
-        frame.render_widget(date, areas[0]);
+        self.create_date_input(frame, areas[0]);
+        //frame.render_widget(&date, areas[0]);
         for (i, rect) in areas[1..].iter().enumerate() {
             let text_area_holder = &mut self.inputs.get_mut(i).unwrap();
             let block = text_area_holder.get_block();
@@ -170,7 +186,7 @@ impl InputsState<'_> {
         }
     }
 
-    fn activate_input(&mut self, frame: &mut Frame, areas: &[Rect]) {
+    fn activate_input(&mut self, frame: &mut Frame, areas: &[Rect], date_area : Rect) {
         match self.input_mode {
             InputMode::Normal => {}
             #[allow(clippy::cast_possible_truncation)]
@@ -189,7 +205,30 @@ impl InputsState<'_> {
                 );
                 frame.render_widget(&*text_area, areas[self.selected_input_index]);
             }
+            InputMode::DateEditing => {
+                let title = self.date_input.get_title();
+                let text_area = &mut self.date_input.text_area;
+                text_area
+                    .set_cursor_line_style(Style::default().add_modifier(Modifier::UNDERLINED));
+                text_area.set_cursor_style(Style::default().add_modifier(Modifier::REVERSED));
+                text_area.set_block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .style(Style::default().fg(Color::Yellow))
+                        .title(title),
+                );
+                frame.render_widget(&*text_area, date_area);
+            }
         }
+    }
+
+    fn create_date_input(&mut self, frame: &mut Frame, area: Rect) {
+        self.date_input.text_area.set_block(Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default().fg(Color::Green))
+            .title("Ημερομηνία").clone());
+        self.date_input.text_area.set_style(Style::default());
+        frame.render_widget(&self.date_input.text_area, area);
     }
 
     fn create_help_message(&self) -> (Vec<Span<'_>>, Style) {
@@ -212,13 +251,17 @@ impl InputsState<'_> {
                 ],
                 Style::default(),
             ),
+            InputMode::DateEditing => (
+                vec![
+                    "Press ".green().into(),
+                    "Esc".green().bold(),
+                    " to stop editing, ".green().into(),
+                    "Enter".green().bold(),
+                    " to record the date".green().into(),
+                ],
+                Style::default(),
+            ),
         }
-    }
-
-    fn create_date_paragraph(&self) -> Paragraph<'_> {
-        Paragraph::new(self.date_now.to_string())
-            .style(Style::default().green())
-            .block(Block::bordered().title("Ημερομηνία"))
     }
 
 }
