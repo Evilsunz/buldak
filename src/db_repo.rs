@@ -1,6 +1,16 @@
 use std::fs;
 use chrono::{NaiveDate};
+use const_format::concatcp;
 use rusqlite::{Connection, Result};
+
+#[cfg(debug_assertions)]
+const SQLITE_FILE_PREFIX:&'static str = "./";
+
+#[cfg(not(debug_assertions))]
+const SQLITE_FILE_PREFIX:&'static str = "/Users/maxim/.buldak/";
+
+const SQL_FILENAME: &'static str = concatcp!(SQLITE_FILE_PREFIX, "buldak.sqlite3");
+const BACKUP_FILENAME: &'static str = concatcp!(SQLITE_FILE_PREFIX, "buldak_backup.sqlite3");
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -101,12 +111,12 @@ pub fn get_records_holder() -> Result<RecordsHolder> {
 }
 
 fn get_connection() -> Connection {
-     Connection::open("./buldak.sqlite3").unwrap()
+     Connection::open(SQL_FILENAME).unwrap()
 }
 
 pub fn init_db(){
-    let _ = fs::copy("./buldak.sqlite3", "./buldak_backup.sqlite3");
-    let conn = Connection::open("./buldak.sqlite3").unwrap();
+    let _ = fs::copy(SQL_FILENAME, BACKUP_FILENAME);
+    let conn = Connection::open(SQL_FILENAME).unwrap();
     let _ =conn.execute(
         "CREATE TABLE if not exists records (
                 id    INTEGER PRIMARY KEY,
