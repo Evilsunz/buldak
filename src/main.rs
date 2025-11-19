@@ -120,7 +120,7 @@ impl App {
             }
             InputMode::DateEditing => match (key.modifiers, key.code) {
                 (_, KeyCode::Esc) => { inputs_state.input_mode = InputMode::Normal },
-                (_, KeyCode::Tab) => { inputs_state.move_cursor_to_next_input(); },
+                (_, KeyCode::Enter) => { inputs_state.input_mode = InputMode::Normal },
                 _ => { inputs_state.date_input(key); },
             }
         }
