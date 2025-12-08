@@ -3,6 +3,7 @@ mod table;
 mod chart;
 mod inputs;
 mod input_validator;
+mod tabs;
 
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
@@ -15,6 +16,7 @@ use crate::chart::vertical_barchart;
 use crate::db_repo::{delete_all, get_records_holder, init_db};
 use crate::inputs::{InputMode, InputsState};
 use crate::table::render_table;
+use crate::tabs::render_tabs;
 
 fn main() -> color_eyre::Result<()> {
     init_db();
@@ -60,21 +62,39 @@ impl App {
 
     fn render(&mut self, frame: &mut Frame, table_state : &mut TableState, inputs_state: &mut InputsState) {
 
-        let layout = Layout::vertical([
+        let main = Layout::vertical([
             Constraint::Length(1),
+            Constraint::Length(3),
+            Constraint::Fill(1),
+        ]).spacing(1)
+            .split(frame.area());
+
+        let inner = Layout::vertical([
             Constraint::Length(30),
             Constraint::Length(4),
             Constraint::Fill(1),
-            ]).spacing(1)
-            .split(frame.area());
+        ]).spacing(1)
+            .split(main[2]);
+
+        // let layout = Layout::vertical([
+        //     Constraint::Length(1),
+        //     Constraint::Length(4),
+        //     Constraint::Length(30),
+        //     Constraint::Length(4),
+        //     Constraint::Fill(1),
+        // ]).spacing(1)
+        //     .split(frame.area());
+
         let title = Line::from_iter([
             Span::from("+++++ BULDAK expences +++++").green().bold().underlined(),
         ]);
-        frame.render_widget(title.centered(), layout[0]);
-        //Table need to maintain its own state (cursor movements so on)
-        render_table(frame,layout[1], table_state);
-        inputs_state.render(frame, layout[2]);
-        frame.render_widget(vertical_barchart(get_records_holder().unwrap()), layout[3]);
+        frame.render_widget(title.centered(), main[0]);
+        frame.render_widget(render_tabs(), main[1]);
+        //Table needs to maintain its own state (cursor movements so on)
+
+        render_table(frame,inner[0], table_state);
+        inputs_state.render(frame, inner[1]);
+        frame.render_widget(vertical_barchart(get_records_holder().unwrap()), inner[2]);
     }
 
     /// Reads the crossterm events and updates the state of [`App`].
