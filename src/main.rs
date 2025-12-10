@@ -16,7 +16,7 @@ use crate::chart::vertical_barchart;
 use crate::db_repo::{delete_all, get_records_holder, init_db};
 use crate::inputs::{InputMode, InputsState};
 use crate::table::render_table;
-use crate::tabs::render_tabs;
+use crate::tabs::{render_tabs, TabsState};
 
 fn main() -> color_eyre::Result<()> {
     init_db();
@@ -28,10 +28,10 @@ fn main() -> color_eyre::Result<()> {
 }
 
 /// The main application which holds the state and logic of the application.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct App {
-    /// Is the application running?
     running: bool,
+    current_month : String
 }
 
 impl App {
@@ -43,6 +43,8 @@ impl App {
     /// Run the application's main loop.
     pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
         self.running = true;
+        //TabsState
+        let mut tabs_state = TabsState::new(self.clone());
 
         //Table
         let mut table_state = TableState::default();
@@ -52,46 +54,34 @@ impl App {
         //Inputs
         let mut inputs_state = InputsState::new();
 
-
+        println!("++++++++ Current moth {}", self.current_month);
         while self.running {
-            terminal.draw(|frame| self.render(frame, &mut table_state, &mut inputs_state))?;
-            self.handle_crossterm_events(&mut table_state , &mut inputs_state )?;
+            terminal.draw(|frame| self.render(frame, &mut table_state, &mut inputs_state, &mut tabs_state))?;
+            self.handle_crossterm_events(&mut table_state , &mut inputs_state , &mut tabs_state )?;
         }
         Ok(())
     }
 
-    fn render(&mut self, frame: &mut Frame, table_state : &mut TableState, inputs_state: &mut InputsState) {
+    fn render(&mut self, frame: &mut Frame, table_state : &mut TableState, inputs_state: &mut InputsState, tabs_state: &mut TabsState) {
 
         let main = Layout::vertical([
             Constraint::Length(1),
             Constraint::Length(3),
             Constraint::Fill(1),
-        ]).spacing(1)
-            .split(frame.area());
+        ]).split(frame.area());
 
         let inner = Layout::vertical([
             Constraint::Length(30),
             Constraint::Length(4),
             Constraint::Fill(1),
-        ]).spacing(1)
-            .split(main[2]);
-
-        // let layout = Layout::vertical([
-        //     Constraint::Length(1),
-        //     Constraint::Length(4),
-        //     Constraint::Length(30),
-        //     Constraint::Length(4),
-        //     Constraint::Fill(1),
-        // ]).spacing(1)
-        //     .split(frame.area());
+        ]).split(main[2]);
 
         let title = Line::from_iter([
             Span::from("+++++ BULDAK expences +++++").green().bold().underlined(),
         ]);
         frame.render_widget(title.centered(), main[0]);
-        frame.render_widget(render_tabs(), main[1]);
+        frame.render_widget(render_tabs(tabs_state), main[1]);
         //Table needs to maintain its own state (cursor movements so on)
-
         render_table(frame,inner[0], table_state);
         inputs_state.render(frame, inner[1]);
         frame.render_widget(vertical_barchart(get_records_holder().unwrap()), inner[2]);
@@ -101,10 +91,10 @@ impl App {
     ///
     /// If your application needs to perform work in between handling events, you can use the
     /// [`event::poll`] function to check if there are any events available with a timeout.
-    fn handle_crossterm_events(&mut self, table_state: &mut TableState, inputs_state: &mut InputsState) -> Result<()> {
+    fn handle_crossterm_events(&mut self, table_state: &mut TableState, inputs_state: &mut InputsState, tabs_state: &mut TabsState) -> Result<()> {
         match event::read()? {
             // it's important to check KeyEventKind::Press to avoid handling key release events
-            Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key, table_state, inputs_state),
+            Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key, table_state, inputs_state, tabs_state),
             Event::Mouse(_) => {}
             Event::Resize(_, _) => {}
             _ => {}
@@ -112,10 +102,11 @@ impl App {
         Ok(())
     }
 
-    fn on_key_event(&mut self, key: KeyEvent, table_state: &mut TableState, inputs_state: &mut InputsState) {
+    fn on_key_event(&mut self, key: KeyEvent, table_state: &mut TableState, inputs_state: &mut InputsState, tabs_state: &mut TabsState) {
         match inputs_state.input_mode {
             InputMode::Normal => match (key.modifiers, key.code) {
                 (_, KeyCode::Esc | KeyCode::Char('q')) | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => self.quit(),
+                (_, KeyCode::Tab) => tabs_state.select_next(self.clone()),
                 (_, KeyCode::Down) => table_state.select_next(),
                 (_, KeyCode::Up) => table_state.select_previous(),
                 (_, KeyCode::Right) => table_state.select_next_column(),

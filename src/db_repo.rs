@@ -110,6 +110,19 @@ pub fn get_records_holder() -> Result<RecordsHolder> {
     Ok(RecordsHolder::new(&records))
 }
 
+pub fn get_month_year() -> Result<Vec<String>> {
+    let conn = get_connection();
+
+    let mut stmt = conn.prepare("select distinct STRFTIME('%m-%Y', date) from records order by date desc")?;
+    let mut months:Vec<String> = vec!();
+    let dates_iter = stmt.query_map([], |row| {
+        let value: String = row.get(0)?;
+        Ok(value)
+    })?;
+    months = dates_iter.map(|r| r.unwrap()).collect::<Vec<String>>();
+    Ok(months)
+}
+
 fn get_connection() -> Connection {
      Connection::open(SQL_FILENAME).unwrap()
 }

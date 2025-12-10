@@ -35,10 +35,10 @@ fn temperature_style(_value: f32) -> Style {
 fn create_time_serie(records : Vec<Record>) -> IndexMap<String,f32>{
     let expenses = flatten_by_dates(&records);
     let mut serie :IndexMap<NaiveDate, f32> = IndexMap::new();
-    let mut mont_ago = Utc::now().date_naive() - Duration::days(31);
+    let mut month_ago = Utc::now().date_naive() - Duration::days(31);
     for _i in 1..=32 {
-        serie .insert(mont_ago, 0.0);
-        mont_ago = mont_ago + Duration::days(1);
+        serie .insert(month_ago, 0.0);
+        month_ago = month_ago + Duration::days(1);
     }
     serie.extend(expenses);
     serie.sort_keys();
