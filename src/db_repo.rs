@@ -92,11 +92,11 @@ pub fn delete_all() -> Result<usize> {
     )
 }
 
-pub fn get_records_holder() -> Result<RecordsHolder> {
+pub fn get_records_holder(date : String) -> Result<RecordsHolder> {
     let conn = get_connection();
 
-    let mut stmt = conn.prepare("SELECT id, store, beer, allos, comment, date FROM records order by date asc")?;
-    let person_iter = stmt.query_map([], |row| {
+    let mut stmt = conn.prepare("SELECT id, store, beer, allos, comment, date FROM records where STRFTIME('%m-%Y', date) = ?1 order by date asc")?;
+    let person_iter = stmt.query_map([date], |row| {
         Ok(Record {
             id: row.get(0)?,
             store: row.get(1)?,

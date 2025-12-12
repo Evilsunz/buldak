@@ -13,19 +13,19 @@ pub struct TabsState {
 
 impl TabsState {
     pub fn new(mut app: App) -> Self {
-        let mut months = get_month_year().unwrap_or_else(|_| vec!["Unable to retrieve dates from DB".to_string()]);
+        let mut months = get_months();
         let current_month = Utc::now().format("%m-%Y").to_string();
 
         if !months.contains(&current_month) {
             months.insert(0, current_month);
         }
-        app.current_month = months[0].clone();
+        *app.current_month.lock().unwrap() = months[0].clone();
         Self { months, index: 0 }
     }
 
     pub fn select_next(&mut self, mut app: App) {
         self.index = (self.index + 1) % self.months.len();
-        app.current_month = self.months[self.index].clone();
+        *app.current_month.lock().unwrap() = self.months[self.index].clone();
     }
 
     pub fn select_previous(&mut self, mut app: App) {
@@ -34,12 +34,13 @@ impl TabsState {
         } else {
             self.index = self.months.len() - 1;
         }
-        app.current_month = self.months[self.index].clone();
+        *app.current_month.lock().unwrap() = self.months[self.index].clone();
     }
 }
 
 pub fn render_tabs(tabs_state: &mut TabsState) -> Tabs<'static> {
     let highlight_style = (Color::Black, Color::Yellow);
+    tabs_state.months = get_months();
     Tabs::new(tabs_state.months.clone())
         .green()
         .highlight_style(highlight_style)
@@ -47,4 +48,8 @@ pub fn render_tabs(tabs_state: &mut TabsState) -> Tabs<'static> {
         .block(Block::bordered().border_style(Color::Green))
         .padding("++", "++")
         .divider(" ")
+}
+
+fn get_months() -> Vec<String>{
+    get_month_year().unwrap_or_else(|_| vec!["Unable to retrieve dates from DB".to_string()])
 }
