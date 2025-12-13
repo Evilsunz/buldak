@@ -5,10 +5,11 @@ use ratatui::{
     text::Line,
     widgets::{Bar, BarChart, BarGroup, Block},
 };
-use crate::db_repo::{Record, RecordsHolder};
+use crate::db_repo::{get_records_holder, Record};
 
-pub fn vertical_barchart(records_holder: RecordsHolder) -> BarChart<'static> {
-    let bars: Vec<Bar> = create_time_serie(records_holder.records)
+pub fn vertical_barchart(current_month : NaiveDate) -> BarChart<'static> {
+    let records_holder = get_records_holder(current_month.clone()).unwrap();
+    let bars: Vec<Bar> = create_time_serie(records_holder.records, current_month)
         .iter()
         .map(|(date, value)| vertical_bar(date, *value))
         .collect();
@@ -32,20 +33,17 @@ fn temperature_style(_value: f32) -> Style {
     Style::new().fg(Color::Green)
 }
 
-fn create_time_serie(records : Vec<Record>) -> IndexMap<String,f32>{
+fn create_time_serie(records : Vec<Record>, mut current_month: NaiveDate) -> IndexMap<String,f32>{
     let expenses = flatten_by_dates(&records);
     let mut serie :IndexMap<NaiveDate, f32> = IndexMap::new();
-    let mut month_ago = Utc::now().date_naive() - Duration::days(31);
     for _i in 1..=32 {
-        serie .insert(month_ago, 0.0);
-        month_ago = month_ago + Duration::days(1);
+        serie .insert(current_month, 0.0);
+        current_month = current_month + Duration::days(1);
     }
     serie.extend(expenses);
     serie.sort_keys();
     let result :IndexMap<String,f32> =serie.into_iter().map(|(date, value)| {
-        let month_enum = Month::try_from(date.month() as u8).ok().unwrap();
-        let month = &month_enum.name()[..3];
-        (format!("{}+{}" , month, date.day()) , value)
+        (date.format("%b-%d").to_string(), value)
     }).collect();
     result
 }

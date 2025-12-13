@@ -7,7 +7,7 @@ use ratatui::style::Stylize;
 use ratatui::widgets::{Row, Table, TableState};
 use crate::db_repo::{get_records_holder, RecordsHolder};
 
-pub fn render_table(frame: &mut Frame, area: Rect, table_state: &mut TableState, date : String) {
+pub fn render_table(frame: &mut Frame, area: Rect, table_state: &mut TableState, date : NaiveDate) {
     let header = Row::new(["Ημερομηνία", "Προϊόντα", "Μπύρα", "Αλλος", "Σύνολο σε μέρα","Σχόλια"])
         .style(Style::new().bold())
         .bottom_margin(1);

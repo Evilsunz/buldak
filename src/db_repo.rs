@@ -1,5 +1,5 @@
 use std::fs;
-use chrono::{NaiveDate};
+use chrono::{Datelike, NaiveDate, Utc};
 use const_format::concatcp;
 use rusqlite::{Connection, Result};
 
@@ -92,11 +92,11 @@ pub fn delete_all() -> Result<usize> {
     )
 }
 
-pub fn get_records_holder(date : String) -> Result<RecordsHolder> {
+pub fn get_records_holder(date : NaiveDate) -> Result<RecordsHolder> {
     let conn = get_connection();
-
+    let date_string = date.format("%m-%Y").to_string();
     let mut stmt = conn.prepare("SELECT id, store, beer, allos, comment, date FROM records where STRFTIME('%m-%Y', date) = ?1 order by date asc")?;
-    let person_iter = stmt.query_map([date], |row| {
+    let person_iter = stmt.query_map([date_string], |row| {
         Ok(Record {
             id: row.get(0)?,
             store: row.get(1)?,
@@ -110,17 +110,25 @@ pub fn get_records_holder(date : String) -> Result<RecordsHolder> {
     Ok(RecordsHolder::new(&records))
 }
 
-pub fn get_month_year() -> Result<Vec<String>> {
+pub fn get_month_year_naive() -> Result<Vec<NaiveDate>> {
     let conn = get_connection();
 
     let mut stmt = conn.prepare("select distinct STRFTIME('%m-%Y', date) from records order by date desc")?;
-    let mut months:Vec<String> = vec!();
-    let dates_iter = stmt.query_map([], |row| {
+    let mut dates_iter = stmt.query_map([], |row| {
         let value: String = row.get(0)?;
         Ok(value)
     })?;
-    months = dates_iter.map(|r| r.unwrap()).collect::<Vec<String>>();
-    Ok(months)
+
+    let mut db_dates = dates_iter.map(|r| {
+        let date = r.unwrap();
+        NaiveDate::parse_from_str(format!("01-{}", date).as_str(),"%d-%m-%Y").unwrap()
+    }).collect::<Vec<NaiveDate>>();
+
+    let current_month = Utc::now().with_day(1).unwrap().date_naive();
+    if !db_dates.contains(&current_month) {
+        db_dates.insert(0, current_month);
+    }
+    Ok(db_dates)
 }
 
 fn get_connection() -> Connection {

@@ -1,24 +1,19 @@
-use chrono::{Datelike, Utc};
+use chrono::{Datelike, Month, NaiveDate, Utc};
 use ratatui::prelude::{Stylize, Widget};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Padding, Tabs};
 use crate::App;
-use crate::db_repo::get_month_year;
+use crate::db_repo::{get_month_year_naive};
 
 
 pub struct TabsState {
-    pub months: Vec<String>,
+    pub months: Vec<NaiveDate>,
     pub index: usize,
 }
 
 impl TabsState {
     pub fn new(mut app: App) -> Self {
         let mut months = get_months();
-        let current_month = Utc::now().format("%m-%Y").to_string();
-
-        if !months.contains(&current_month) {
-            months.insert(0, current_month);
-        }
         *app.current_month.lock().unwrap() = months[0].clone();
         Self { months, index: 0 }
     }
@@ -41,7 +36,12 @@ impl TabsState {
 pub fn render_tabs(tabs_state: &mut TabsState) -> Tabs<'static> {
     let highlight_style = (Color::Black, Color::Yellow);
     tabs_state.months = get_months();
-    Tabs::new(tabs_state.months.clone())
+
+    let dates_str: Vec<String> = tabs_state.months.iter().map(|my|{
+        my.format("%b-%Y").to_string()
+    } ).collect();
+
+    Tabs::new(dates_str)
         .green()
         .highlight_style(highlight_style)
         .select(tabs_state.index)
@@ -50,6 +50,6 @@ pub fn render_tabs(tabs_state: &mut TabsState) -> Tabs<'static> {
         .divider(" ")
 }
 
-fn get_months() -> Vec<String>{
-    get_month_year().unwrap_or_else(|_| vec!["Unable to retrieve dates from DB".to_string()])
+fn get_months() -> Vec<NaiveDate> {
+    get_month_year_naive().unwrap_or_else(|_| panic!("Unable to retrieve dates from DB"))
 }

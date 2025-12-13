@@ -6,6 +6,7 @@ mod input_validator;
 mod tabs;
 
 use std::sync::{Arc, Mutex};
+use chrono::NaiveDate;
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{DefaultTerminal, Frame, text::Line};
@@ -32,7 +33,7 @@ fn main() -> color_eyre::Result<()> {
 #[derive(Debug, Default, Clone)]
 pub struct App {
     running: bool,
-    current_month: Arc<Mutex<String>>
+    current_month: Arc<Mutex<NaiveDate>>,
 }
 
 impl App {
@@ -82,9 +83,9 @@ impl App {
         frame.render_widget(title.centered(), main[0]);
         frame.render_widget(render_tabs(tabs_state), main[1]);
         //Table needs to maintain its own state (cursor movements so on)
-        render_table(frame, inner[0], table_state, (self.current_month.lock().unwrap().to_string()));
+        render_table(frame, inner[0], table_state, (self.current_month.lock().unwrap()).to_owned());
         inputs_state.render(frame, inner[1]);
-        frame.render_widget(vertical_barchart(get_records_holder(self.current_month.lock().unwrap().to_string()).unwrap()), inner[2]);
+        frame.render_widget(vertical_barchart(self.current_month.lock().unwrap().to_owned()), inner[2]);
     }
 
     /// Reads the crossterm events and updates the state of [`App`].
