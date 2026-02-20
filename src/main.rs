@@ -107,7 +107,8 @@ impl App {
         match inputs_state.input_mode {
             InputMode::Normal => match (key.modifiers, key.code) {
                 (_, KeyCode::Esc | KeyCode::Char('q')) | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => self.quit(),
-                (_, KeyCode::Tab) => tabs_state.select_next(self.clone()),
+                (KeyModifiers::ALT, KeyCode::Right )=> tabs_state.select_next(self.clone()),
+                (KeyModifiers::ALT, KeyCode::Left )=> tabs_state.select_previous(self.clone()),
                 (_, KeyCode::Down) => table_state.select_next(),
                 (_, KeyCode::Up) => table_state.select_previous(),
                 (_, KeyCode::Right) => table_state.select_next_column(),
