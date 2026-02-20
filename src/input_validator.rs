@@ -57,9 +57,18 @@ fn convert_to_f32(str : &str) -> f32{
 
     let result = match working_str.find('+') {
         Some(_) => {
-            working_str.split("+")
-                .filter(|v| !v.is_empty())
-                .map(|v| v.parse::<f32>().unwrap())
+            let sanitized = working_str.replace(['(', ')'], "");
+
+            let parse_term = |raw: &str| {
+                raw.trim()
+                    .parse::<f32>()
+                    .expect("expected a numeric term in '+'-separated expression")
+            };
+
+            sanitized
+                .split('+')
+                .filter(|term| !term.trim().is_empty())
+                .map(parse_term)
                 .sum::<f32>()
         }
         None => {
@@ -91,6 +100,7 @@ mod tests {
         assert_eq!(convert_to_f32("+10"), 10.0);
 
         assert_eq!(convert_to_f32("-5+10"), -15.0);
+        assert_eq!(convert_to_f32("-(5+10)"), -15.0);
         assert_eq!(convert_to_f32("-1.5"), -1.5);
         assert_eq!(convert_to_f32("-"), 0.0);
     }
