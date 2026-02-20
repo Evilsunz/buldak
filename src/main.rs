@@ -117,7 +117,7 @@ impl App {
                 (_, KeyCode::Char('G')) => table_state.select_last(),
                 (_, KeyCode::Char('e')) => { inputs_state.input_mode = InputMode::Editing; },
                 (_, KeyCode::Char('d')) => { inputs_state.input_mode = InputMode::DateEditing; },
-                (_, KeyCode::Char('[')) => { let _ = delete_all(); },
+                // (_, KeyCode::Char('[')) => { let _ = delete_all(); },
                 _ => {}
             }
             InputMode::Editing => match (key.modifiers, key.code) {
