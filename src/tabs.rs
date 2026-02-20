@@ -1,7 +1,7 @@
-use chrono::{Datelike, Month, NaiveDate, Utc};
-use ratatui::prelude::{Stylize, Widget};
-use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, Padding, Tabs};
+use chrono::{NaiveDate};
+use ratatui::prelude::{Stylize};
+use ratatui::style::{Color};
+use ratatui::widgets::{Block, Tabs};
 use crate::App;
 use crate::db_repo::{get_month_year_naive};
 
@@ -12,18 +12,18 @@ pub struct TabsState {
 }
 
 impl TabsState {
-    pub fn new(mut app: App) -> Self {
-        let mut months = get_months();
+    pub fn new(app: App) -> Self {
+        let months = get_months();
         *app.current_month.lock().unwrap() = months[0].clone();
         Self { months, index: 0 }
     }
 
-    pub fn select_next(&mut self, mut app: App) {
+    pub fn select_next(&mut self, app: App) {
         self.index = (self.index + 1) % self.months.len();
         *app.current_month.lock().unwrap() = self.months[self.index].clone();
     }
 
-    pub fn select_previous(&mut self, mut app: App) {
+    pub fn select_previous(&mut self, app: App) {
         if self.index > 0 {
             self.index -= 1;
         } else {

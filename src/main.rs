@@ -15,7 +15,7 @@ use ratatui::layout::{Constraint, Layout};
 use ratatui::prelude::Span;
 use ratatui::widgets::{TableState};
 use crate::chart::vertical_barchart;
-use crate::db_repo::{delete_all, get_records_holder, init_db};
+use crate::db_repo::{delete_all, init_db};
 use crate::inputs::{InputMode, InputsState};
 use crate::table::render_table;
 use crate::tabs::{render_tabs, TabsState};

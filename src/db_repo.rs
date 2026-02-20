@@ -114,7 +114,7 @@ pub fn get_month_year_naive() -> Result<Vec<NaiveDate>> {
     let conn = get_connection();
 
     let mut stmt = conn.prepare("select distinct STRFTIME('%m-%Y', date) from records order by date desc")?;
-    let mut dates_iter = stmt.query_map([], |row| {
+    let dates_iter = stmt.query_map([], |row| {
         let value: String = row.get(0)?;
         Ok(value)
     })?;
